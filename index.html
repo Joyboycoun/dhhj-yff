@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enhanced Tic-Tac-Toe</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(to bottom right, #6a11cb, #2575fc);
+            transition: background-color 0.3s ease-in-out;
+        }
+        .container {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+        }
+        .home-screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        h1 {
+            color: #ffffff;
+            font-size: 3rem;
+            text-shadow: 2px 2px 6px rgba(0, 0, 0, 0.3);
+        }
+        .subtitle {
+            color: #ffffff;
+            font-size: 1.5rem;
+            margin-top: 10px;
+            text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.3);
+        }
+        button {
+            margin-top: 20px;
+            padding: 14px 28px;
+            font-size: 18px;
+            color: white;
+            background-color: #ff7f50;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: transform 0.2s, background-color 0.3s;
+        }
+        button:hover {
+            transform: scale(1.1);
+            background-color: #e67350;
+        }
+        .board {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px; /* Ensure buttons don't touch each other */
+            width: 100%;
+            max-width: 320px;
+            margin-top: 20px;
+        }
+        .cell {
+            width: 100%;
+            aspect-ratio: 1;
+            background-color: #fff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            font-weight: bold;
+            border-radius: 10px;
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            transition: transform 0.2s, background-color 0.3s;
+        }
+        .cell:hover {
+            transform: scale(1.1);
+            background-color: #f0f8ff;
+        }
+        .cell.taken {
+            cursor: not-allowed;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            max-width: 320px;
+        }
+        .header span {
+            font-size: 18px;
+            font-weight: bold;
+            color: white;
+            text-shadow: 1px 1px 2px #000;
+        }
+        .message {
+            margin-top: 20px;
+            font-size: 20px;
+            font-weight: bold;
+            color: white;
+            text-shadow: 1px 1px 2px #000;
+        }
+        .dark-mode {
+            background: linear-gradient(to bottom right, #1c1c1c, #3a3a3a);
+            color: white;
+        }
+        .dark-mode .cell {
+            background-color: #444;
+        }
+        .dark-mode .cell:hover {
+            background-color: #555;
+        }
+        button:focus {
+            outline: 2px solid #ff7f50;
+            outline-offset: 2px;
+        }
+    </style>
+</head>
+<body>
+    <div class="home-screen" id="home-screen">
+        <h1>Welcome to Tic-Tac-Toe</h1>
+        <p class="subtitle">Joyboy likes you</p>
+        <button id="start-game" aria-label="Start the game">Play</button>
+        <button id="toggle-theme" aria-label="Toggle dark mode">Dark Mode</button>
+    </div>
+    <div class="container" id="game-container">
+        <div class="header">
+            <span id="scores">X: 0 | O: 0</span>
+            <button id="theme-toggle" aria-label="Toggle dark mode">Dark Mode</button>
+        </div>
+        <div class="board" id="board"></div>
+        <div class="message" id="message"></div>
+    </div>
+
+    <script>
+        // Elements
+        const homeScreen = document.getElementById('home-screen');
+        const gameContainer = document.getElementById('game-container');
+        const startGameButton = document.getElementById('start-game');
+        const themeToggleHome = document.getElementById('toggle-theme');
+        const themeToggleGame = document.getElementById('theme-toggle');
+        const board = document.getElementById('board');
+        const message = document.getElementById('message');
+        const scoresDisplay = document.getElementById('scores');
+
+        // Game variables
+        let squares = Array(9).fill(' ');
+        let currentPlayer = 'X';
+        let scores = { X: 0, O: 0 };
+
+        // Initialize game
+        function renderBoard() {
+            board.innerHTML = '';
+            squares.forEach((value, index) => {
+                const cell = document.createElement('div');
+                cell.classList.add('cell');
+                if (value !== ' ') cell.classList.add('taken');
+                cell.textContent = value;
+                cell.setAttribute('aria-label', value !== ' ' ? `Taken by ${value}` : `Empty cell`);
+                cell.addEventListener('click', () => makeMove(index));
+                board.appendChild(cell);
+            });
+        }
+
+        function makeMove(index) {
+            if (squares[index] !== ' ') {
+                message.textContent = 'Invalid move!';
+                return;
+            }
+
+            squares[index] = currentPlayer;
+
+            if (checkWin(currentPlayer)) {
+                scores[currentPlayer]++;
+                updateScores();
+                setTimeout(() => {
+                    message.textContent = `${currentPlayer} wins!`;
+                    alert(`${currentPlayer} wins!`);
+                }, 100);
+                return;
+            }
+
+            if (!squares.includes(' ')) {
+                message.textContent = "It's a tie!";
+                return;
+            }
+
+            currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
+            renderBoard();
+            message.textContent = `${currentPlayer}'s turn.`;
+        }
+
+        function checkWin(player) {
+            const winConditions = [
+                [0, 1, 2], [3, 4, 5], [6, 7, 8],
+                [0, 3, 6], [1, 4, 7], [2, 5, 8],
+                [0, 4, 8], [2, 4, 6],
+            ];
+            return winConditions.some(condition =>
+                condition.every(index => squares[index] === player)
+            );
+        }
+
+        function updateScores() {
+            scoresDisplay.textContent = `X: ${scores.X} | O: ${scores.O}`;
+        }
+
+        // Event Listeners
+        startGameButton.addEventListener('click', () => {
+            homeScreen.style.display = 'none';
+            gameContainer.style.display = 'flex';
+            renderBoard();
+            message.textContent = `${currentPlayer}'s turn.`;
+        });
+
+        themeToggleHome.addEventListener('click', () => {
+            document.body.classList.toggle('dark-mode');
+        });
+
+        themeToggleGame.addEventListener('click', () => {
+            document.body.classList.toggle('dark-mode');
+        });
+
+        // Initialize
+        renderBoard();
+    </script>
+</html>
